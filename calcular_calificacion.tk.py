@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import simpledialog
 
 # Diccionario para almacenar alumnos
 alumnos = {}
@@ -15,110 +15,140 @@ def calcular_calificacion(nota):
     elif nota >= 9:
         return "SB"
 
+# Función para validar entradas
+def es_numero(valor):
+    return valor.isdigit()
+
+def es_letra(valor):
+    return valor.replace(" ", "").isalpha()
+
 # Funciones de gestión
 def mostrar_alumnos():
     if not alumnos:
-        messagebox.showinfo("Lista de Alumnos", "No hay alumnos registrados.")
+        resultado_label.config(text="No hay alumnos registrados.")
         return
     resultado = "DNI | Apellidos, Nombre | Nota | Calificación\n"
     for dni, datos in alumnos.items():
         resultado += f"{dni} | {datos['apellidos']}, {datos['nombre']} | {datos['nota']} | {datos['calificacion']}\n"
-    messagebox.showinfo("Lista de Alumnos", resultado)
+    resultado_label.config(text=resultado)
 
 def introducir_alumno():
     dni = simpledialog.askstring("Introducir Alumno", "DNI:")
-    if not dni or dni in alumnos:
-        messagebox.showerror("Error", "DNI inválido o ya registrado.")
+    if not dni or not es_numero(dni):
+        resultado_label.config(text="Error: El DNI debe contener solo números.")
+        return
+    if dni in alumnos:
+        resultado_label.config(text="Error: El DNI ya está registrado.")
         return
     apellidos = simpledialog.askstring("Introducir Alumno", "Apellidos:")
-    nombre = simpledialog.askstring("Introducir Alumno", "Nombre:")
-    try:
-        nota = float(simpledialog.askstring("Introducir Alumno", "Nota:"))
-        if not (0 <= nota <= 10):
-            raise ValueError
-    except ValueError:
-        messagebox.showerror("Error", "Nota inválida. Introduzca un número entre 0 y 10.")
+    if not apellidos or not es_letra(apellidos):
+        resultado_label.config(text="Error: Los apellidos deben contener solo letras.")
         return
+    nombre = simpledialog.askstring("Introducir Alumno", "Nombre:")
+    if not nombre or not es_letra(nombre):
+        resultado_label.config(text="Error: El nombre debe contener solo letras.")
+        return
+    nota = simpledialog.askstring("Introducir Alumno", "Nota:")
+    if not nota or not es_numero(nota) or not (0 <= float(nota) <= 10):
+        resultado_label.config(text="Error: Nota inválida. Introduzca un número entre 0 y 10.")
+        return
+    nota = float(nota)
     calificacion = calcular_calificacion(nota)
     alumnos[dni] = {"apellidos": apellidos, "nombre": nombre, "nota": nota, "calificacion": calificacion}
-    messagebox.showinfo("Éxito", "Alumno introducido correctamente.")
+    resultado_label.config(text="Alumno introducido correctamente.")
 
 def eliminar_alumno():
     dni = simpledialog.askstring("Eliminar Alumno", "DNI del alumno a eliminar:")
+    if not dni or not es_numero(dni):
+        resultado_label.config(text="Error: El DNI debe contener solo números.")
+        return
     if dni in alumnos:
         del alumnos[dni]
-        messagebox.showinfo("Éxito", "Alumno eliminado correctamente.")
+        resultado_label.config(text="Alumno eliminado correctamente.")
     else:
-        messagebox.showerror("Error", "DNI no encontrado.")
+        resultado_label.config(text="Error: DNI no encontrado.")
 
 def consultar_alumno():
     dni = simpledialog.askstring("Consultar Alumno", "DNI del alumno:")
+    if not dni or not es_numero(dni):
+        resultado_label.config(text="Error: El DNI debe contener solo números.")
+        return
     if dni in alumnos:
         datos = alumnos[dni]
-        resultado = f"DNI: {dni}\nApellidos: {datos['apellidos']}\nNombre: {datos['nombre']}\nNota: {datos['nota']}\nCalificación: {datos['calificacion']}"
-        messagebox.showinfo("Información del Alumno", resultado)
+        resultado = (f"DNI: {dni}\nApellidos: {datos['apellidos']}\nNombre: {datos['nombre']}\n"
+                     f"Nota: {datos['nota']}\nCalificación: {datos['calificacion']}")
+        resultado_label.config(text=resultado)
     else:
-        messagebox.showerror("Error", "DNI no encontrado.")
+        resultado_label.config(text="Error: DNI no encontrado.")
 
 def modificar_nota():
     dni = simpledialog.askstring("Modificar Nota", "DNI del alumno:")
+    if not dni or not es_numero(dni):
+        resultado_label.config(text="Error: El DNI debe contener solo números.")
+        return
     if dni in alumnos:
-        try:
-            nueva_nota = float(simpledialog.askstring("Modificar Nota", "Nueva nota:"))
-            if not (0 <= nueva_nota <= 10):
-                raise ValueError
-        except ValueError:
-            messagebox.showerror("Error", "Nota inválida. Introduzca un número entre 0 y 10.")
+        nueva_nota = simpledialog.askstring("Modificar Nota", "Nueva nota:")
+        if not nueva_nota or not es_numero(nueva_nota) or not (0 <= float(nueva_nota) <= 10):
+            resultado_label.config(text="Error: Nota inválida. Introduzca un número entre 0 y 10.")
             return
+        nueva_nota = float(nueva_nota)
         alumnos[dni]["nota"] = nueva_nota
         alumnos[dni]["calificacion"] = calcular_calificacion(nueva_nota)
-        messagebox.showinfo("Éxito", "Nota modificada correctamente.")
+        resultado_label.config(text="Nota modificada correctamente.")
     else:
-        messagebox.showerror("Error", "DNI no encontrado.")
+        resultado_label.config(text="Error: DNI no encontrado.")
 
 def mostrar_suspensos():
     suspensos = [f"{dni} | {datos['apellidos']}, {datos['nombre']} | {datos['nota']} | {datos['calificacion']}" 
                  for dni, datos in alumnos.items() if datos["nota"] < 5]
     if suspensos:
-        messagebox.showinfo("Alumnos Suspensos", "\n".join(suspensos))
+        resultado_label.config(text="\n".join(suspensos))
     else:
-        messagebox.showinfo("Alumnos Suspensos", "No hay alumnos suspensos.")
+        resultado_label.config(text="No hay alumnos suspensos.")
 
 def mostrar_aprobados():
     aprobados = [f"{dni} | {datos['apellidos']}, {datos['nombre']} | {datos['nota']} | {datos['calificacion']}" 
                  for dni, datos in alumnos.items() if datos["nota"] >= 5]
     if aprobados:
-        messagebox.showinfo("Alumnos Aprobados", "\n".join(aprobados))
+        resultado_label.config(text="\n".join(aprobados))
     else:
-        messagebox.showinfo("Alumnos Aprobados", "No hay alumnos aprobados.")
+        resultado_label.config(text="No hay alumnos aprobados.")
 
 def mostrar_mh():
     mh = [f"{dni} | {datos['apellidos']}, {datos['nombre']} | {datos['nota']} | {datos['calificacion']}" 
           for dni, datos in alumnos.items() if datos["nota"] == 10]
     if mh:
-        messagebox.showinfo("Candidatos a MH", "\n".join(mh))
+        resultado_label.config(text="\n".join(mh))
     else:
-        messagebox.showinfo("Candidatos a MH", "No hay candidatos a matrícula de honor.")
+        resultado_label.config(text="No hay candidatos a matrícula de honor.")
 
 # Configuración de la interfaz gráfica
 root = tk.Tk()
 root.title("Gestión de Calificaciones de Alumnos")
-root.geometry("400x300")
+root.geometry("800x500")
 
-menu = tk.Menu(root)
-root.config(menu=menu)
+# Etiqueta para mostrar los resultados
+resultado_label = tk.Label(root, text="", justify="left", anchor="w", width=80, height=15, bg="white", relief="solid")
+resultado_label.pack(pady=10)
 
-# Menú de opciones
-menu_alumnos = tk.Menu(menu, tearoff=0)
-menu.add_cascade(label="Gestión de Alumnos", menu=menu_alumnos)
-menu_alumnos.add_command(label="Mostrar Alumnos", command=mostrar_alumnos)
-menu_alumnos.add_command(label="Introducir Alumno", command=introducir_alumno)
-menu_alumnos.add_command(label="Eliminar Alumno", command=eliminar_alumno)
-menu_alumnos.add_command(label="Consultar Alumno", command=consultar_alumno)
-menu_alumnos.add_command(label="Modificar Nota", command=modificar_nota)
-menu_alumnos.add_command(label="Mostrar Suspensos", command=mostrar_suspensos)
-menu_alumnos.add_command(label="Mostrar Aprobados", command=mostrar_aprobados)
-menu_alumnos.add_command(label="Candidatos a MH", command=mostrar_mh)
+# Frame para los botones
+frame = tk.Frame(root)
+frame.pack(pady=10)
+
+# Botones con colores y disposición horizontal
+botones = [
+    ("Mostrar Alumnos", mostrar_alumnos, "lightblue"),
+    ("Introducir Alumno", introducir_alumno, "lightgreen"),
+    ("Eliminar Alumno", eliminar_alumno, "lightcoral"),
+    ("Consultar Alumno", consultar_alumno, "khaki"),
+    ("Modificar Nota", modificar_nota, "lightpink"),
+    ("Mostrar Suspensos", mostrar_suspensos, "plum"),
+    ("Mostrar Aprobados", mostrar_aprobados, "lightyellow"),
+    ("Candidatos a MH", mostrar_mh, "lightsalmon")
+]
+
+for idx, (texto, comando, color) in enumerate(botones):
+    tk.Button(frame, text=texto, command=comando, width=20, bg=color).grid(row=idx // 4, column=idx % 4, padx=10, pady=5)
 
 # Iniciar la aplicación
 root.mainloop()
